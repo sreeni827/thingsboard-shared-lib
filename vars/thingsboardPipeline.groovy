@@ -3,7 +3,7 @@ def call() {
     agent any
 
     environment {
-      DOCKER_IMAGE = "sreenivasuluramanaboina/thingsboard:kafka"
+      DOCKER_IMAGE = "sreenivasuluramanaboina/thingsboard:kafka-v2"
     }
 
     stages {
