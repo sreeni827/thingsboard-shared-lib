@@ -2,6 +2,8 @@ package org.devsecops
 
 class OwaspScan {
   static void scan() {
+    echo "🛡️ Starting OWASP Dependency-Check scan..."
+
     sh '''
       mkdir -p owasp-output
       docker run --rm \
@@ -13,6 +15,7 @@ class OwaspScan {
         --format "HTML" \
         --out /report
     '''
-    echo "📄 OWASP Dependency-Check report generated at owasp-output/index.html"
+
+    echo "✅ OWASP scan complete. Report: owasp-output/dependency-check-report.html"
   }
 }
