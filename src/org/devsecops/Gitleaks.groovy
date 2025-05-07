@@ -1,15 +1,25 @@
 package org.devsecops
 
 class Gitleaks {
-  static void scan() {
-    echo "🔐 Starting GitLeaks secrets scan..."
-    
-    sh '''
-      docker run --rm \
-        -v "$(pwd)":/repo \
-        zricethezav/gitleaks detect --source=/repo
-    '''
+    def steps
 
-    echo "✅ GitLeaks scan completed."
-  }
+    Gitleaks(steps) {
+        this.steps = steps
+    }
+
+    void scan() {
+        steps.echo "🔐 Running GitLeaks scan..."
+
+        try {
+            steps.sh """
+                docker run --rm \
+                  -v ${steps.env.WORKSPACE}:/repo zricethezav/gitleaks \
+                  detect --source=/repo --no-git --report-format sarif
+            """
+            steps.echo "✅ GitLeaks scan completed."
+        } catch (Exception e) {
+            steps.echo "❌ GitLeaks scan failed: ${e.getMessage()}"
+            throw e
+        }
+    }
 }
