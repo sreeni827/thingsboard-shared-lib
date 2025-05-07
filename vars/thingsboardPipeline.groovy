@@ -7,7 +7,6 @@ def call() {
     }
 
     stages {
-
       stage('Build Backend') {
         steps {
           sh 'mvn clean install -DskipTests -pl application,common,dao,transport -am -Dskip.npm -Dskip.yarn -Dskip.ui -Dskip.frontend'
@@ -23,8 +22,8 @@ def call() {
       stage('Trivy Scan') {
         steps {
           script {
-            echo "🔍 Running Trivy on image: ${DOCKER_IMAGE}"
-            org.devsecops.Trivy.scan(DOCKER_IMAGE)
+            def trivy = new org.devsecops.Trivy(this)
+            trivy.scan(DOCKER_IMAGE)
           }
         }
       }
@@ -32,7 +31,8 @@ def call() {
       stage('GitLeaks Scan') {
         steps {
           script {
-            org.devsecops.Gitleaks.scan()
+            def gitleaks = new org.devsecops.Gitleaks(this)
+            gitleaks.scan()
           }
         }
       }
@@ -40,7 +40,8 @@ def call() {
       stage('OWASP Scan') {
         steps {
           script {
-            org.devsecops.OwaspScan.scan()
+            def owasp = new org.devsecops.OwaspScan(this)
+            owasp.scan()
           }
         }
       }
