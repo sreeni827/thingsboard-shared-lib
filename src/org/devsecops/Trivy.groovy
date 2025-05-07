@@ -1,20 +1,30 @@
 package org.devsecops
 
+def steps
+
+Trivy(steps) {
+  this.steps = steps
+}
+
 class Trivy {
-  static void scan(String image) {
-    echo "🔍 Scanning image with Trivy: ${image}"
+  def steps
+  Trivy(steps) {
+    this.steps = steps
+  }
+
+  void scan(String image) {
+    steps.echo "🔍 Scanning image with Trivy: ${image}"
 
     try {
-      sh """
+      steps.sh """
         docker run --rm \
           -v /var/run/docker.sock:/var/run/docker.sock \
           aquasec/trivy image --severity HIGH,CRITICAL ${image}
       """
-      echo "✅ Trivy scan passed."
+      steps.echo "✅ Trivy scan completed successfully."
     } catch (Exception e) {
-      echo "❌ Trivy scan failed: ${e.getMessage()}"
-      throw e  // or comment this line if you want to let the pipeline continue
+      steps.echo "❌ Trivy scan failed: ${e.getMessage()}"
+      throw e
     }
   }
 }
-
