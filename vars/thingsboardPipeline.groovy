@@ -8,13 +8,17 @@ def call() {
 
     stages {
       stage('Build Backend') {
+        when { expression { return false } }
         steps {
+          echo '⏩ Skipping backend build for now'
           // sh 'mvn clean install -DskipTests -pl application,common,dao,transport -am -Dskip.npm -Dskip.yarn -Dskip.ui -Dskip.frontend'
         }
       }
 
       stage('Build Docker Image') {
+        when { expression { return false } }
         steps {
+          echo '⏩ Skipping Docker build for now'
           // sh 'docker build -t $DOCKER_IMAGE -f thingsboard-devops/docker/Dockerfile.tb .'
         }
       }
@@ -47,13 +51,15 @@ def call() {
       }
 
       stage('Push Docker Image') {
+        when { expression { return false } }
         steps {
-          withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            sh '''
-              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-              docker push $DOCKER_IMAGE
-            '''
-          }
+          echo '⏩ Skipping Docker push for now'
+          // withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          //   sh '''
+          //     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+          //     docker push $DOCKER_IMAGE
+          //   '''
+          // }
         }
       }
     }
