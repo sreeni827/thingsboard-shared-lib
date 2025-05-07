@@ -29,6 +29,15 @@ def call() {
         }
       }
 
+      stage('OWASP Scan') {
+        steps {
+          script {
+            org.devsecops.OwaspScan.scan()
+        }
+      }
+    }
+
+
       stage('Build Docker Image') {
         steps {
           sh 'docker build -t $DOCKER_IMAGE -f thingsboard-devops/docker/Dockerfile.tb .'
