@@ -8,13 +8,17 @@ class Trivy {
     }
 
     void scan(String image) {
-        steps.echo "🔍 Scanning image with Trivy: ${image}"
+        steps.echo "🔍 Starting Trivy vulnerability scan on image: ${image}"
 
         try {
             steps.sh """
                 docker run --rm \
                   -v /var/run/docker.sock:/var/run/docker.sock \
-                  aquasec/trivy image --severity HIGH,CRITICAL ${image}
+                  -v /tmp/trivy-cache:/root/.cache/ \
+                  aquasec/trivy image \
+                  --scanners vuln \
+                  --severity HIGH,CRITICAL \
+                  ${image}
             """
             steps.echo "✅ Trivy scan completed successfully."
         } catch (Exception e) {
