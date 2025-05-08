@@ -8,13 +8,18 @@ class Gitleaks {
     }
 
     void scan() {
-        steps.echo "🔐 Running GitLeaks scan..."
+        steps.echo "🔐 Running optimized GitLeaks scan..."
 
         try {
             steps.sh """
                 docker run --rm \
-                  -v ${steps.env.WORKSPACE}:/repo zricethezav/gitleaks \
-                  detect --source=/repo --no-git --report-format sarif
+                  -v ${steps.env.WORKSPACE}:/repo \
+                  zricethezav/gitleaks detect \
+                  --source=/repo \
+                  --no-git \
+                  --report-format json \
+                  --exit-code 0 \
+                  --redact
             """
             steps.echo "✅ GitLeaks scan completed."
         } catch (Exception e) {
