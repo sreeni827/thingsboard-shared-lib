@@ -63,6 +63,37 @@ def call() {
         }
       }
     }
+    stage('Provision EKS Cluster') {
+  steps {
+    dir('terraform-eks/envs/dev') {
+      script {
+        sh 'terraform init'
+        sh 'terraform plan -var-file="terraform.tfvars"'
+        sh 'terraform apply -auto-approve -var-file="terraform.tfvars"'
+      }
+    }
+  }
+}
+    stage('Deploy to EKS with Helm') {
+  steps {
+    script {
+      sh '''
+        # Set up kubeconfig for kubectl
+        aws eks update-kubeconfig --region us-east-1 --name thingsboard-dev-cluster
+
+        # Deploy or upgrade ThingsBoard using Helm
+        helm upgrade --install thingsboard ./helm/thingsboard \
+          --namespace thingsboard \
+          --create-namespace \
+          --set image.repository=sreenivasuluramanaboina/thingsboard \
+          --set image.tag=kafka-v2
+      '''
+    }
+  }
+}
+
+
+
 
     post {
       failure {
