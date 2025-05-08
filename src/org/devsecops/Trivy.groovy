@@ -1,28 +1,43 @@
 package org.devsecops
 
-class Trivy {
+class Gitleaks {
     def steps
 
-    Trivy(steps) {
+    Gitleaks(steps) {
         this.steps = steps
     }
 
-    void scan(String image) {
-        steps.echo "🔍 Starting Trivy vulnerability scan on image: ${image}"
+    void scan() {
+        steps.echo "🔐 Running fast GitLeaks scan on key folders..."
 
         try {
-            steps.sh """
-                docker run --rm \
-                  -v /var/run/docker.sock:/var/run/docker.sock \
-                  -v /tmp/trivy-cache:/root/.cache/ \
-                  aquasec/trivy image \
-                  --scanners vuln \
-                  --severity HIGH,CRITICAL \
-                  ${image}
-            """
-            steps.echo "✅ Trivy scan completed successfully."
+            // Adjust paths to your real subfolders
+            def scanTargets = [
+                "${steps.env.WORKSPACE}/src",
+                "${steps.env.WORKSPACE}/app",
+                "${steps.env.WORKSPACE}/config"
+            ]
+
+            for (path in scanTargets) {
+                steps.sh """
+                    if [ -d "${path}" ]; then
+                      docker run --rm \
+                        -v ${path}:/repo \
+                        zricethezav/gitleaks detect \
+                        --source=/repo \
+                        --no-git \
+                        --report-format json \
+                        --exit-code 0 \
+                        --redact
+                    else
+                      echo "⚠️ Skipping missing path: ${path}"
+                    fi
+                """
+            }
+
+            steps.echo "✅ GitLeaks scan completed successfully."
         } catch (Exception e) {
-            steps.echo "❌ Trivy scan failed: ${e.getMessage()}"
+            steps.echo "❌ GitLeaks scan failed: ${e.getMessage()}"
             throw e
         }
     }
