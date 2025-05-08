@@ -1,29 +1,28 @@
 package org.devsecops
 
-class Gitleaks {
+class Trivy {
     def steps
 
-    Gitleaks(steps) {
+    Trivy(steps) {
         this.steps = steps
     }
 
-    void scan() {
-        steps.echo "🔐 Running optimized GitLeaks scan..."
+    void scan(String image) {
+        steps.echo "🔍 Starting Trivy vulnerability scan on image: ${image}"
 
         try {
             steps.sh """
                 docker run --rm \
-                  -v ${steps.env.WORKSPACE}:/repo \
-                  zricethezav/gitleaks detect \
-                  --source=/repo \
-                  --no-git \
-                  --report-format json \
-                  --exit-code 0 \
-                  --redact
+                  -v /var/run/docker.sock:/var/run/docker.sock \
+                  -v /tmp/trivy-cache:/root/.cache/ \
+                  aquasec/trivy image \
+                  --scanners vuln \
+                  --severity HIGH,CRITICAL \
+                  ${image}
             """
-            steps.echo "✅ GitLeaks scan completed."
+            steps.echo "✅ Trivy scan completed successfully."
         } catch (Exception e) {
-            steps.echo "❌ GitLeaks scan failed: ${e.getMessage()}"
+            steps.echo "❌ Trivy scan failed: ${e.getMessage()}"
             throw e
         }
     }
