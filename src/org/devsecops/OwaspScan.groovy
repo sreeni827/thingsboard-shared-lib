@@ -13,12 +13,9 @@ class OwaspScan {
         def updateFlag = "--noupdate"
         def cacheDir = "/tmp/owasp-data"
 
-        // check if DB exists
-        def dbExists = steps.fileExists("${cacheDir}/dc.h2.db")
-
-        if (!dbExists) {
+        if (!steps.fileExists("${cacheDir}/dc.h2.db")) {
             steps.echo "📥 OWASP DB not found in cache. Will auto-update."
-            updateFlag = ""  // allow download
+            updateFlag = ""  // first time only
         }
 
         try {
@@ -31,13 +28,13 @@ class OwaspScan {
                   owasp/dependency-check \
                   --project "ThingsBoard" \
                   --scan /src \
-                  --format "HTML" \
+                  --format "JSON" \
                   --out /report \
                   --disableAssembly \
                   ${updateFlag}
             """
-            steps.echo "✅ OWASP scan complete. Report saved to: owasp-output/dependency-check-report.html"
-            steps.archiveArtifacts artifacts: 'owasp-output/*.html', onlyIfSuccessful: false
+            steps.echo "✅ OWASP scan complete. Report: owasp-output/dependency-check-report.json"
+            steps.archiveArtifacts artifacts: 'owasp-output/*.json', onlyIfSuccessful: false
         } catch (Exception e) {
             steps.echo "❌ OWASP scan failed: ${e.getMessage()}"
             throw e
