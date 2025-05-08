@@ -1,5 +1,6 @@
 package org.devsecops
 
+
 class OwaspScan {
     def steps
 
