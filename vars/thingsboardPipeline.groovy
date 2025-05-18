@@ -11,7 +11,6 @@ def call() {
         when { expression { return false } }
         steps {
           echo '⏩ Skipping backend build for now'
-          // sh 'mvn clean install -DskipTests -pl application,common,dao,transport -am -Dskip.npm -Dskip.yarn -Dskip.ui -Dskip.frontend'
         }
       }
 
@@ -19,7 +18,6 @@ def call() {
         when { expression { return false } }
         steps {
           echo '⏩ Skipping Docker build for now'
-          // sh 'docker build -t $DOCKER_IMAGE -f thingsboard-devops/docker/Dockerfile.tb .'
         }
       }
 
@@ -51,73 +49,55 @@ def call() {
       }
 
       stage('Push Docker Image') {
-        
         steps {
-         
-                   withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
             sh '''
               echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
               docker push $DOCKER_IMAGE
             '''
-           }
+          }
         }
       }
-    }
-    stage('Provision EKS Cluster') {
-  steps {
-    dir('terraform-eks/envs/dev') {
-      script {
-        sh 'terraform init'
-        sh 'terraform plan -var-file="terraform.tfvars"'
-        sh 'terraform apply -auto-approve -var-file="terraform.tfvars"'
-      }
-    }
-  }
-}
-    stage('Deploy to EKS with Helm') {
-  steps {
-    script {
-      sh '''
-        # Set up kubeconfig for kubectl
-        aws eks update-kubeconfig --region us-east-1 --name thingsboard-dev-cluster
 
-        # Deploy or upgrade ThingsBoard using Helm
-        helm upgrade --install thingsboard ./helm/thingsboard \
-          --namespace thingsboard \
-          --create-namespace \
-          --set image.repository=sreenivasuluramanaboina/thingsboard \
-          --set image.tag=kafka-v2
-      '''
-    }
-  }
-}
-    stage('Provision EKS Cluster') {
-  steps {
-    dir('terraform-eks/envs/qa') {
-      script {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials'
-        ]]) {
-          withEnv([
-            'AWS_ACCESS_KEY_ID=' + env.AWS_ACCESS_KEY_ID,
-            'AWS_SECRET_ACCESS_KEY=' + env.AWS_SECRET_ACCESS_KEY,
-            'AWS_DEFAULT_REGION=us-east-1'
-          ]) {
+      stage('Provision EKS Cluster') {
+        steps {
+          dir('terraform-eks/envs/qa') {
+            script {
+              withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'aws-credentials'
+              ]]) {
+                withEnv([
+                  'AWS_ACCESS_KEY_ID=' + env.AWS_ACCESS_KEY_ID,
+                  'AWS_SECRET_ACCESS_KEY=' + env.AWS_SECRET_ACCESS_KEY,
+                  'AWS_DEFAULT_REGION=us-east-1'
+                ]) {
+                  sh '''
+                    terraform init
+                    terraform apply -auto-approve -var-file="terraform.tfvars"
+                  '''
+                }
+              }
+            }
+          }
+        }
+      }
+
+      stage('Deploy to EKS with Helm') {
+        steps {
+          script {
             sh '''
-              terraform init
-              terraform apply -auto-approve -var-file="terraform.tfvars"
+              aws eks update-kubeconfig --region us-east-1 --name eks-dev
+              helm upgrade --install thingsboard ./helm/thingsboard \
+                --namespace thingsboard \
+                --create-namespace \
+                --set image.repository=sreenivasuluramanaboina/thingsboard \
+                --set image.tag=kafka-v2
             '''
           }
         }
       }
     }
-  }
-}
-
-
-
-
 
     post {
       failure {
